@@ -1,7 +1,30 @@
 #cloud-config
 autoinstall:
   version: 1
+  locale: de_DE
+  keyboard:
+    layout: de
+  network:
+    network:
+      version: 2
+      ethernets:
+        ens33: #this changes depending on hardware 
+          dhcp4: false
+          addresses: [10.0.0.1/24]
+          gateway4: 10.0.0.1
+          nameservers:
+            addresses: [1.1.1.1, 8.8.8.8]
+  storage:
+    layout:
+      name: lvm
   identity:
-    hostname: ubuntu-server
-    password: "$6$exDY1mhS4KUYCE/2$zmn9ToZwTKLhCw.b4/b.ZRTIZM30JZ4QrOQ2aOXJ8yk96xpcCof0kxKwuX1kqLG/ygbJ1f8wxED22bTL4F46P0"
+    hostname: localhost
     username: ubuntu
+    password: generateyourownwith mkpasswd --method=SHA-512 --rounds=4096 # may need package whois
+  ssh:
+    install-server: true
+  late-commands:
+    - sudo timedatectl set-timezone Europe/Berlin
+    - sudo sed -i 's/#NTP=/NTP=1.2.3.4/g' /etc/systemd/timesyncd.conf
+    - sudo sed -i 's/#FallbackNTP=ntp.ubuntu.com/FallbackNTP=1.2.3.4/g' /etc/systemd/timesyncd.conf
+    - sudo sed -i 's/#RootDistanceMaxSec=5/RootDistanceMaxSec=15/g' /etc/systemd/timesyncd.conf
