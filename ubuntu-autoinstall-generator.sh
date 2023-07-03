@@ -29,7 +29,7 @@ usage() {
         cat <<EOF
 Usage: $(basename "${BASH_SOURCE[0]}") [-h] [-v] [-a] [-e] [-u user-data-file] [-m meta-data-file] [-k] [-c] [-r] [-s source-iso-file] [-d destination-iso-file]
 
-💁 This script will create fully-automated Ubuntu 20.04 Focal Fossa installation media.
+💁 This script will create fully-automated Ubuntu 22.04 Focal Fossa installation media.
 
 Available options:
 
@@ -228,7 +228,10 @@ if [ ${use_hwe_kernel} -eq 1 ]; then
 fi
 
 log "🧩 Adding autoinstall parameter to kernel command line..."
-sed -i -e 's/---/ autoinstall  ---/g' "$tmpdir/isolinux/txt.cfg"
+#sed -i -e 's/---/ autoinstall  ---/g' "$tmpdir/isolinux/txt.cfg"
+if [ -e $tmpdir/isolinux/txt.cfg ]; then
+        sed -i -e 's/---/ autoinstall  ---/g' "$tmpdir/isolinux/txt.cfg"
+fi
 sed -i -e 's/---/ autoinstall  ---/g' "$tmpdir/boot/grub/grub.cfg"
 sed -i -e 's/---/ autoinstall  ---/g' "$tmpdir/boot/grub/loopback.cfg"
 log "👍 Added parameter to UEFI and BIOS kernel command lines."
@@ -242,7 +245,10 @@ if [ ${all_in_one} -eq 1 ]; then
         else
                 touch "$tmpdir/nocloud/meta-data"
         fi
+        #sed -i -e 's,---, ds=nocloud;s=/cdrom/nocloud/  ---,g' "$tmpdir/isolinux/txt.cfg"
+          if [ -e $tmpdir/isolinux/txt.cfg ]; then
         sed -i -e 's,---, ds=nocloud;s=/cdrom/nocloud/  ---,g' "$tmpdir/isolinux/txt.cfg"
+          fi
         sed -i -e 's,---, ds=nocloud\\\;s=/cdrom/nocloud/  ---,g' "$tmpdir/boot/grub/grub.cfg"
         sed -i -e 's,---, ds=nocloud\\\;s=/cdrom/nocloud/  ---,g' "$tmpdir/boot/grub/loopback.cfg"
         log "👍 Added data and configured kernel command line."
@@ -263,7 +269,8 @@ fi
 
 log "📦 Repackaging extracted files into an ISO image..."
 cd "$tmpdir"
-xorriso -as mkisofs -r -V "ubuntu-autoinstall-$today" -J -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -isohybrid-mbr /usr/lib/ISOLINUX/isohdpfx.bin -boot-info-table -input-charset utf-8 -eltorito-alt-boot -e boot/grub/efi.img -no-emul-boot -isohybrid-gpt-basdat -o "${destination_iso}" . &>/dev/null
+#xorriso -as mkisofs -r -V "ubuntu-autoinstall-$today" -J -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -isohybrid-mbr /usr/lib/ISOLINUX/isohdpfx.bin -boot-info-table -input-charset utf-8 -eltorito-alt-boot -e boot/grub/efi.img -no-emul-boot -isohybrid-gpt-basdat -o "${destination_iso}" . &>/dev/null
+xorriso -as mkisofs -r -V "ubuntu-autoinstall-$today" -c boot.cat -no-emul-boot -boot-load-size 4 -isohybrid-mbr /usr/lib/ISOLINUX/isohdpfx.bin -boot-info-table -eltorito-alt-boot -no-emul-boot -isohybrid-gpt-basdat -b '/boot/grub/i386-pc/eltorito.img' -o "${destination_iso}" . &>/dev/null
 cd "$OLDPWD"
 log "👍 Repackaged into ${destination_iso}"
 
